@@ -18,7 +18,7 @@ export function Header() {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left">
-                        <div className="px-2 py-6">
+                        <div className="px-2 pt-12 pb-6">
                             <Sidebar />
                         </div>
                     </SheetContent>

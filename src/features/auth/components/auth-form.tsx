@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,6 +9,7 @@ import { login, signup } from '@/features/auth/actions'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface AuthFormProps {
     view: 'login' | 'signup'
@@ -16,6 +18,7 @@ interface AuthFormProps {
 export function AuthForm({ view }: AuthFormProps) {
     const [loading, setLoading] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const router = useRouter()
 
     useEffect(() => {
         setMounted(true)
@@ -32,6 +35,10 @@ export function AuthForm({ view }: AuthFormProps) {
                 const result = await login(formData)
                 if (result?.error) {
                     toast.error(result.error)
+                } else {
+                    toast.success('Logged in successfully')
+                    router.push('/')
+                    router.refresh()
                 }
             } else {
                 const result = await signup(formData)
@@ -52,6 +59,9 @@ export function AuthForm({ view }: AuthFormProps) {
 
     return (
         <Card className="w-full max-w-md mx-auto">
+            <div className="flex justify-center pt-6">
+                <Image src="/logo.png" alt="Logo" width={64} height={64} className="h-16 w-16" />
+            </div>
             <CardHeader>
                 <CardTitle>{view === 'login' ? 'Login' : 'Sign Up'}</CardTitle>
                 <CardDescription>

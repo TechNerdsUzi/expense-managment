@@ -45,8 +45,8 @@ export function ExpenseList({ data }: ExpenseListProps) {
                     <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Description</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Type</TableHead>
+                        <TableHead className="hidden sm:table-cell">Category</TableHead>
+                        <TableHead className="hidden sm:table-cell">Type</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -63,8 +63,8 @@ export function ExpenseList({ data }: ExpenseListProps) {
                             <TableRow key={expense.id}>
                                 <TableCell suppressHydrationWarning>{format(new Date(expense.date), 'MMM d, yyyy')}</TableCell>
                                 <TableCell>{expense.description}</TableCell>
-                                <TableCell className="capitalize">{expense.category}</TableCell>
-                                <TableCell>
+                                <TableCell className="capitalize hidden sm:table-cell">{expense.category}</TableCell>
+                                <TableCell className="hidden sm:table-cell">
                                     <Badge variant={expense.type === 'income' ? 'default' : 'secondary'}>
                                         {expense.type}
                                     </Badge>
