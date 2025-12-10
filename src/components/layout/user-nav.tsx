@@ -26,7 +26,7 @@ export function UserNav() {
             }
         }
         getUser()
-    }, [supabase])
+    }, [])
 
     return (
         <DropdownMenu>
