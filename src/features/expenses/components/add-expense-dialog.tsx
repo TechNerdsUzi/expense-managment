@@ -134,6 +134,8 @@ export function AddExpenseDialog() {
                                 <SelectItem value="health">Health</SelectItem>
                                 <SelectItem value="education">Education</SelectItem>
                                 <SelectItem value="salary">Salary</SelectItem>
+                                <SelectItem value="sadqa">Sadqa</SelectItem>
+                                <SelectItem value="withdrawl">Withdrawl</SelectItem>
                                 <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                         </Select>
