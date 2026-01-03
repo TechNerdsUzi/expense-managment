@@ -19,23 +19,45 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { addExpense } from '@/features/expenses/actions'
+import { addExpense, updateExpense } from '@/features/expenses/actions'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { CalendarIcon, Plus } from 'lucide-react'
+import { CalendarIcon, Plus, Pencil } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { Database } from '@/types'
 
-export function AddExpenseDialog() {
-    const [open, setOpen] = useState(false)
+type Expense = Database['public']['Tables']['expenses']['Row']
+
+interface ExpenseDialogProps {
+    expense?: Expense
+    trigger?: React.ReactNode
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+}
+
+export function ExpenseDialog({ expense, trigger, open: controlledOpen, onOpenChange }: ExpenseDialogProps) {
+    const [internalOpen, setInternalOpen] = useState(false)
     const [date, setDate] = useState<Date | undefined>()
     const [loading, setLoading] = useState(false)
 
+    const isInternalManaged = controlledOpen === undefined
+    const open = isInternalManaged ? internalOpen : controlledOpen
+    const setOpen = isInternalManaged ? setInternalOpen : onOpenChange!
+
+    const isEdit = !!expense
+
     useEffect(() => {
-        setDate(new Date())
-    }, [])
+        if (open) {
+            if (expense) {
+                setDate(new Date(expense.date))
+            } else {
+                setDate(new Date())
+            }
+        }
+    }, [open, expense])
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -47,14 +69,21 @@ export function AddExpenseDialog() {
         }
 
         try {
-            const result = await addExpense(formData)
+            let result
+            if (isEdit) {
+                result = await updateExpense(expense.id, formData)
+            } else {
+                result = await addExpense(formData)
+            }
+
             if (result.error) {
                 toast.error(result.error)
             } else {
                 toast.success(result.success)
                 setOpen(false)
-                // Reset form or state if needed, but Dialog unmounts content usually or we can reset manually
-                setDate(new Date())
+                if (!isEdit) {
+                    setDate(new Date())
+                }
             }
         } catch {
             toast.error('Something went wrong')
@@ -66,32 +95,35 @@ export function AddExpenseDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Add Transaction
-                </Button>
+                {trigger || (
+                    <Button variant={'outline'} size={'icon'}>
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Add Transaction</DialogTitle>
+                    <DialogTitle>{isEdit ? 'Edit Transaction' : 'Add Transaction'}</DialogTitle>
                     <DialogDescription>
-                        Add a new income or expense record.
+                        {isEdit ? 'Edit your transaction details below.' : 'Add a new income or expense record.'}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="description" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="description" className="text-left sm:text-right">
                             Description
                         </Label>
                         <Input
                             id="description"
                             name="description"
+                            defaultValue={expense?.description}
                             placeholder="Groceries"
-                            className="col-span-3"
+                            className="col-span-1 sm:col-span-3"
                             required
                         />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="amount" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="amount" className="text-left sm:text-right">
                             Amount
                         </Label>
                         <Input
@@ -99,17 +131,18 @@ export function AddExpenseDialog() {
                             name="amount"
                             type="number"
                             step="0.01"
+                            defaultValue={expense?.amount}
                             placeholder="0.00"
-                            className="col-span-3"
+                            className="col-span-1 sm:col-span-3"
                             required
                         />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="type" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="type" className="text-left sm:text-right">
                             Type
                         </Label>
-                        <Select name="type" required defaultValue="expense">
-                            <SelectTrigger className="col-span-3">
+                        <Select name="type" required defaultValue={expense?.type || "expense"}>
+                            <SelectTrigger className="col-span-1 sm:col-span-3">
                                 <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
@@ -118,12 +151,12 @@ export function AddExpenseDialog() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="category" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="category" className="text-left sm:text-right">
                             Category
                         </Label>
-                        <Select name="category" required>
-                            <SelectTrigger className="col-span-3">
+                        <Select name="category" required defaultValue={expense?.category}>
+                            <SelectTrigger className="col-span-1 sm:col-span-3">
                                 <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
@@ -140,14 +173,14 @@ export function AddExpenseDialog() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Date</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label className="text-left sm:text-right">Date</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "col-span-3 justify-start text-left font-normal",
+                                        "col-span-1 sm:col-span-3 justify-start text-left font-normal",
                                         !date && "text-muted-foreground"
                                     )}
                                 >
@@ -175,3 +208,11 @@ export function AddExpenseDialog() {
         </Dialog>
     )
 }
+// Export alias for backward compatibility or clarity if needed, 
+// but since I replaced the whole file content, I can just export as named 'ExpenseDialog'
+// and add a re-export if I want to avoid breaking imports immediately, 
+// OR I assume I'll fix the update sites.
+// The task plan said "Rename to ExpenseDialog (or keep name...)"
+// I'll keep the file named `add-expense-dialog.tsx` but export `ExpenseDialog`. 
+// I should export `AddExpenseDialog` as an alias to avoid breaking existing imports until I fix them.
+export const AddExpenseDialog = ExpenseDialog

@@ -2,11 +2,25 @@ import { StatsCards } from '@/features/analytics/components/stats-cards'
 import { SpendingChart } from '@/features/analytics/components/spending-chart'
 import { ExpenseList } from '@/features/expenses/components/expense-list'
 import { getExpenses } from '@/features/expenses/actions'
+import { MonthFilter } from '@/features/analytics/components/month-filter'
+import { startOfMonth, endOfMonth, format } from 'date-fns'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
 
-export default async function DashboardPage() {
-    const expensesData = await getExpenses()
+export default async function DashboardPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+    const searchParams = await props.searchParams
+    const currentYear = new Date().getFullYear().toString()
+    const currentMonth = (new Date().getMonth() + 1).toString()
+
+    const year = (searchParams?.year as string) || currentYear
+    const month = (searchParams?.month as string) || currentMonth
+
+    // Construct dates
+    const date = new Date(parseInt(year), parseInt(month) - 1)
+    const startDate = format(startOfMonth(date), 'yyyy-MM-dd')
+    const endDate = format(endOfMonth(date), 'yyyy-MM-dd')
+
+    const expensesData = await getExpenses(startDate, endDate)
 
     const income = expensesData
         .filter((e) => e.type === 'income')
@@ -39,12 +53,15 @@ export default async function DashboardPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                <MonthFilter />
             </div>
 
             <StatsCards income={income} expenses={expenses} balance={balance} />
 
             <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
-                <SpendingChart data={categoryData} />
+                <div className="col-span-4">
+                    <SpendingChart data={categoryData} />
+                </div>
 
                 <div className="col-span-3">
                     <h2 className="text-lg font-semibold mb-4">Recent Transactions</h2>

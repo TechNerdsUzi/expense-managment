@@ -11,10 +11,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Database } from '@/types'
 import { format } from 'date-fns'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Pencil } from 'lucide-react'
 import { deleteExpense } from '@/features/expenses/actions'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
+import { ExpenseDialog } from './add-expense-dialog'
 
 type Expense = Database['public']['Tables']['expenses']['Row']
 
@@ -39,7 +40,7 @@ export function ExpenseList({ data }: ExpenseListProps) {
     }
 
     return (
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -75,9 +76,19 @@ export function ExpenseList({ data }: ExpenseListProps) {
                                     {expense.type === 'income' ? '+' : '-'}${expense.amount.toFixed(2)}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(expense.id)}>
-                                        <Trash2 className="h-4 w-4 text-red-500" />
-                                    </Button>
+                                    <div className="flex justify-end gap-2">
+                                        <ExpenseDialog
+                                            expense={expense}
+                                            trigger={
+                                                <Button variant="ghost" size="icon">
+                                                    <Pencil className="h-4 w-4 text-blue-500" />
+                                                </Button>
+                                            }
+                                        />
+                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(expense.id)}>
+                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))
